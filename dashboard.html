@@ -1,0 +1,363 @@
+{% extends 'index.html' %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-title">Tableau de Bord</h1>
+    <p class="page-subtitle">Analyse statistique de l'épargne étudiante — UY1</p>
+  </div>
+</div>
+
+<!-- ── KPI CARDS ─────────────────────────────────────────── -->
+<div class="kpi-grid">
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon blue"><i class="fas fa-users"></i></div>
+    <div class="kpi-label">Total Enquêtés</div>
+    <div class="kpi-value">{{ total }}<span>étudiants</span></div>
+    <div class="kpi-insight">
+      C'est la taille de l'échantillon <strong>n</strong>. Plus n est grand,
+      plus nos estimations sont fiables et représentatives de la population étudiante.
+    </div>
+  </div>
+
+  <div class="kpi-card cyan">
+    <div class="kpi-icon cyan"><i class="fas fa-calculator"></i></div>
+    <div class="kpi-label">Moyenne (x̄)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.moyenne|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+    <div class="kpi-insight">
+      Montant d'épargne <strong>typique</strong> par étudiant. Si chacun mettait la même somme,
+      ce serait ce montant. Sensible aux valeurs extrêmes (très riches ou très pauvres).
+    </div>
+  </div>
+
+  <div class="kpi-card green">
+    <div class="kpi-icon green"><i class="fas fa-arrows-alt-v"></i></div>
+    <div class="kpi-label">Médiane (Me)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.mediane|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+    <div class="kpi-insight">
+      <strong>50 %</strong> des étudiants épargnent moins que ce montant, et 50 % davantage.
+      Meilleur reflet du « cas typique » car elle n'est pas influencée par les extrêmes.
+    </div>
+  </div>
+
+  <div class="kpi-card amber">
+    <div class="kpi-icon amber"><i class="fas fa-percentage"></i></div>
+    <div class="kpi-label">Taux Bancarisation P(A)</div>
+    <div class="kpi-value">{{ p_inclusion|default(0) }}<span>%</span></div>
+    <div class="kpi-insight">
+      Proportion d'étudiants possédant un compte bancaire. Indicateur clé
+      d'<strong>inclusion financière</strong> : plus ce taux est élevé, meilleur est l'accès aux services.
+    </div>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon blue"><i class="fas fa-chart-area"></i></div>
+    <div class="kpi-label">Écart-type (σ)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.ecart_type|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+    <div class="kpi-insight">
+      Mesure la <strong>dispersion</strong> autour de la moyenne. Un σ élevé révèle de fortes
+      inégalités d'épargne entre étudiants ; un σ faible indique une homogénéité.
+    </div>
+  </div>
+
+  <div class="kpi-card cyan">
+    <div class="kpi-icon cyan"><i class="fas fa-sort-amount-up"></i></div>
+    <div class="kpi-label">Maximum observé</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.max|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+    <div class="kpi-insight">
+      Montant d'épargne le plus élevé de l'échantillon. Combiné au minimum,
+      il définit l'<strong>étendue</strong> totale de la distribution des épargnes.
+    </div>
+  </div>
+
+  {% if total > 1 %}
+  <div class="kpi-card amber">
+    <div class="kpi-icon amber"><i class="fas fa-random"></i></div>
+    <div class="kpi-label">Coeff. de Variation (CV)</div>
+    <div class="kpi-value">{{ stats.cv|default(0) }}<span>%</span></div>
+    <div class="kpi-insight">
+      CV = σ / x̄. Exprime la dispersion <strong>relative</strong> à la moyenne.
+      CV &lt; 15 % = homogène ; 15–30 % = modéré ; &gt; 30 % = très hétérogène.
+      Permet de comparer des groupes aux moyennes différentes.
+    </div>
+  </div>
+
+  <div class="kpi-card green">
+    <div class="kpi-icon green"><i class="fas fa-ruler-horizontal"></i></div>
+    <div class="kpi-label">Intervalle de confiance 95 %</div>
+    <div class="kpi-value" style="font-size:16px; line-height:1.4;">
+      [{{ "{:,.0f}".format(stats.ic_bas|default(0)).replace(',', ' ') }}
+      – {{ "{:,.0f}".format(stats.ic_haut|default(0)).replace(',', ' ') }}]
+      <span>F CFA</span>
+    </div>
+    <div class="kpi-insight">
+      On est <strong>95 % certain</strong> que la vraie moyenne d'épargne de l'ensemble
+      des étudiants de UY1 se situe dans cet intervalle. Plus l'échantillon est grand,
+      plus cet intervalle se resserre.
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% if total > 0 %}
+
+<!-- ── BOÎTE D'INTERPRÉTATION GLOBALE ──────────────────── -->
+<div class="interp-box">
+  <div class="interp-box-title">
+    <i class="fas fa-lightbulb"></i> Lecture synthétique des résultats
+  </div>
+  <ul class="interp-list">
+    <li>
+      <strong>Tendance centrale :</strong>
+      Moyenne x̄ = {{ "{:,.0f}".format(stats.moyenne|default(0)).replace(',', ' ') }} F CFA
+      / Médiane Me = {{ "{:,.0f}".format(stats.mediane|default(0)).replace(',', ' ') }} F CFA.
+      {% if stats.moyenne > stats.mediane %}
+        La moyenne est supérieure à la médiane → la distribution est <strong>asymétrique à droite</strong> (tirée vers le haut par quelques épargnants importants).
+      {% elif stats.moyenne < stats.mediane %}
+        La moyenne est inférieure à la médiane → distribution <strong>asymétrique à gauche</strong>.
+      {% else %}
+        Moyenne ≈ Médiane → distribution <strong>approximativement symétrique</strong>.
+      {% endif %}
+    </li>
+    <li>
+      <strong>Dispersion :</strong> Étendue = {{ "{:,.0f}".format((stats.max|default(0)) - (stats.min|default(0))).replace(',', ' ') }} F CFA
+      (de {{ "{:,.0f}".format(stats.min|default(0)).replace(',', ' ') }} à {{ "{:,.0f}".format(stats.max|default(0)).replace(',', ' ') }} F).
+      {% if stats.cv > 30 %}
+        CV = {{ stats.cv }} % → épargnes <strong>très hétérogènes</strong> entre étudiants.
+      {% elif stats.cv > 15 %}
+        CV = {{ stats.cv }} % → hétérogénéité <strong>modérée</strong>.
+      {% else %}
+        CV = {{ stats.cv }} % → épargnes <strong>relativement homogènes</strong>.
+      {% endif %}
+    </li>
+    <li>
+      <strong>Inclusion financière :</strong> {{ p_inclusion }} % des enquêtés sont bancarisés.
+      {% if p_inclusion >= 80 %}
+        Niveau <strong>élevé</strong> d'inclusion.
+      {% elif p_inclusion >= 50 %}
+        Niveau <strong>moyen</strong> — marge d'amélioration notable.
+      {% else %}
+        Niveau <strong>faible</strong> — près de la moitié n'a pas accès à la banque.
+      {% endif %}
+    </li>
+    <li>
+      <strong>Taille d'échantillon :</strong> n = {{ total }}.
+      {% if total < 30 %}
+        Échantillon <strong>petit</strong> — les résultats sont indicatifs ; augmenter n améliorerait la précision.
+      {% elif total < 100 %}
+        Taille <strong>correcte</strong> pour des premières conclusions.
+      {% else %}
+        Taille <strong>robuste</strong> — inférences statistiques fiables.
+      {% endif %}
+    </li>
+  </ul>
+</div>
+
+<!-- ── CHARTS ROW 1 ─────────────────────────────────────── -->
+<div class="charts-grid">
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-university" style="margin-right:6px;color:var(--blue-light)"></i>Répartition par Banque</div>
+    <canvas id="chartBanques" height="220"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-graduation-cap" style="margin-right:6px;color:var(--accent)"></i>Répartition par Faculté</div>
+    <canvas id="chartFacs" height="220"></canvas>
+  </div>
+
+</div>
+
+<!-- ── CHARTS ROW 2 ─────────────────────────────────────── -->
+<div class="charts-grid">
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-layer-group" style="margin-right:6px;color:var(--emerald)"></i>Répartition par Niveau d'étude</div>
+    <canvas id="chartNiveaux" height="220"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-coins" style="margin-right:6px;color:var(--amber)"></i>Épargne Moyenne par Faculté</div>
+    <canvas id="chartMoyFac" height="220"></canvas>
+  </div>
+
+</div>
+
+<!-- ── INDICATEURS COMPLÉMENTAIRES ──────────────────────── -->
+<div class="panel">
+  <div class="panel-header">
+    <span class="panel-title">Indicateurs Complémentaires</span>
+    <span class="text-muted">Statistiques descriptives</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="stat-cell-label">Minimum</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format(stats.min|default(0)).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Maximum</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format(stats.max|default(0)).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Étendue</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format((stats.max|default(0)) - (stats.min|default(0))).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Bancarisés</div>
+      <div class="stat-cell-value">{{ p_inclusion }} %</div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+
+<div class="panel">
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-database"></i></div>
+    <div class="empty-title">Aucune donnée disponible</div>
+    <p class="empty-desc">
+      L'analyse statistique apparaîtra ici dès qu'un premier enregistrement sera ajouté.<br>
+      <a href="{{ url_for('nouveau') }}">Ajouter un étudiant →</a>
+    </p>
+  </div>
+</div>
+
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    const labelsBanques = JSON.parse('{{ l_b|safe if l_b else "[]" }}');
+    const dataBanques   = JSON.parse('{{ c_b|safe if c_b else "[]" }}');
+    const labelsFacs    = JSON.parse('{{ l_f|safe if l_f else "[]" }}');
+    const dataFacs      = JSON.parse('{{ c_f|safe if c_f else "[]" }}');
+    const labelsNiv     = JSON.parse('{{ l_niv|safe if l_niv else "[]" }}');
+    const dataNiv       = JSON.parse('{{ c_niv|safe if c_niv else "[]" }}');
+    const labelsMoyF    = JSON.parse('{{ l_moy_f|safe if l_moy_f else "[]" }}');
+    const dataMoyF      = JSON.parse('{{ c_moy_f|safe if c_moy_f else "[]" }}');
+
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.font.size   = 12;
+    Chart.defaults.color       = '#64748b';
+
+    const PALETTE = ['#1d4ed8','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+
+    // Graphique 1 — Banques (barres horizontales)
+    if (labelsBanques.length > 0) {
+      new Chart(document.getElementById('chartBanques'), {
+        type: 'bar',
+        data: {
+          labels: labelsBanques,
+          datasets: [{
+            label: 'Étudiants',
+            data: dataBanques,
+            backgroundColor: PALETTE,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { stepSize: 1 } },
+            y: { grid: { display: false }, border: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Graphique 2 — Facultés (doughnut)
+    if (labelsFacs.length > 0) {
+      new Chart(document.getElementById('chartFacs'), {
+        type: 'doughnut',
+        data: {
+          labels: labelsFacs,
+          datasets: [{
+            data: dataFacs,
+            backgroundColor: PALETTE,
+            borderWidth: 3,
+            borderColor: '#ffffff',
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 }
+            }
+          }
+        }
+      });
+    }
+
+    // Graphique 3 — Niveaux (pie)
+    if (labelsNiv.length > 0) {
+      new Chart(document.getElementById('chartNiveaux'), {
+        type: 'pie',
+        data: {
+          labels: labelsNiv,
+          datasets: [{
+            data: dataNiv,
+            backgroundColor: ['#1d4ed8','#10b981','#f59e0b'],
+            borderWidth: 3,
+            borderColor: '#ffffff',
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 }
+            }
+          }
+        }
+      });
+    }
+
+    // Graphique 4 — Épargne moyenne par faculté (barres verticales)
+    if (labelsMoyF.length > 0) {
+      new Chart(document.getElementById('chartMoyFac'), {
+        type: 'bar',
+        data: {
+          labels: labelsMoyF,
+          datasets: [{
+            label: 'Moy. F CFA',
+            data: dataMoyF,
+            backgroundColor: PALETTE,
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, border: { display: false } },
+            y: {
+              grid: { color: '#f1f5f9' }, border: { display: false },
+              ticks: {
+                callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v
+              }
+            }
+          }
+        }
+      });
+    }
+
+  } catch (e) {
+    console.error('Erreur graphiques:', e);
+  }
+});
+</script>
+
+{% endblock %}
