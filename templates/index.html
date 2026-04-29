@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UY1 Insight Pro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-badge">
+        <div class="brand-icon">
+          <i class="fas fa-university"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">UY1 Insight</span>
+          <span class="brand-sub">Analytics Pro</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Navigation</div>
+
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        Analyse
+      </a>
+
+      <a href="{{ url_for('nouveau') }}" class="nav-item {% if request.endpoint == 'nouveau' %}active{% endif %}">
+        <i class="fas fa-plus-circle"></i>
+        Nouveau
+      </a>
+
+      <a href="{{ url_for('donnees') }}" class="nav-item {% if request.endpoint == 'donnees' %}active{% endif %}">
+        <i class="fas fa-table"></i>
+        Données
+      </a>
+
+      <div class="nav-label" style="margin-top: 12px;">Export</div>
+
+      <a href="{{ url_for('exporter') }}" class="nav-item">
+        <i class="fas fa-file-csv"></i>
+        Exporter CSV
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-text">
+        Université de Yaoundé I<br>
+        Statistiques — 2024/2025
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

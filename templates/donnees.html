@@ -1,0 +1,87 @@
+{% extends 'index.html' %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-title">Base de Données</h1>
+    <p class="page-subtitle">{{ rows|length }} enregistrement{{ 's' if rows|length > 1 else '' }} au total</p>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <a href="{{ url_for('nouveau') }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nouveau
+    </a>
+    <a href="{{ url_for('exporter') }}" class="btn btn-success">
+      <i class="fas fa-file-csv"></i> Exporter CSV
+    </a>
+  </div>
+</div>
+
+<div class="panel">
+
+  {% if rows %}
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Matricule</th>
+          <th>Nom complet</th>
+          <th>Faculté</th>
+          <th>Niveau</th>
+          <th>Banque</th>
+          <th>Épargne</th>
+          <th>Raison</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td style="color: var(--text-light); font-size:12px;">{{ loop.index }}</td>
+          <td><span class="badge badge-blue">{{ r.matricule }}</span></td>
+          <td style="font-weight:500;">{{ r.nom }} {{ r.prenom }}</td>
+          <td>{{ r.faculte }}</td>
+          <td>
+            {% if r.niveau == 'Doctorat' %}
+              <span class="badge badge-amber">{{ r.niveau }}</span>
+            {% elif r.niveau == 'Master' %}
+              <span class="badge badge-blue">{{ r.niveau }}</span>
+            {% else %}
+              <span class="badge badge-gray">{{ r.niveau }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.banque == 'Sans Banque' %}
+              <span class="badge badge-gray">{{ r.banque }}</span>
+            {% else %}
+              <span class="badge badge-green">{{ r.banque }}</span>
+            {% endif %}
+          </td>
+          <td class="amount-cell">
+            {{ "{:,.0f}".format(r.montant).replace(',', ' ') }} F
+          </td>
+          <td style="color: var(--text-muted); font-size: 13px; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            {{ r.raison or '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+    <div class="empty-title">Aucun enregistrement</div>
+    <p class="empty-desc">
+      La base de données est vide.<br>
+      <a href="{{ url_for('nouveau') }}">Ajouter le premier étudiant →</a>
+    </p>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

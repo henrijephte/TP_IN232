@@ -1,0 +1,181 @@
+{% extends 'index.html' %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-title">Tableau de Bord</h1>
+    <p class="page-subtitle">Analyse statistique de l'épargne étudiante — UY1</p>
+  </div>
+</div>
+
+<!-- KPI CARDS -->
+<div class="kpi-grid">
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon blue"><i class="fas fa-users"></i></div>
+    <div class="kpi-label">Total Enquêtés</div>
+    <div class="kpi-value">{{ total }}<span>étudiants</span></div>
+  </div>
+
+  <div class="kpi-card cyan">
+    <div class="kpi-icon cyan"><i class="fas fa-calculator"></i></div>
+    <div class="kpi-label">Moyenne (x̄)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.moyenne|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+  </div>
+
+  <div class="kpi-card green">
+    <div class="kpi-icon green"><i class="fas fa-arrows-alt-v"></i></div>
+    <div class="kpi-label">Médiane (Me)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.mediane|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+  </div>
+
+  <div class="kpi-card amber">
+    <div class="kpi-icon amber"><i class="fas fa-percentage"></i></div>
+    <div class="kpi-label">Taux Bancarisation P(A)</div>
+    <div class="kpi-value">{{ p_inclusion|default(0) }}<span>%</span></div>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon blue"><i class="fas fa-chart-area"></i></div>
+    <div class="kpi-label">Écart-type (σ)</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.ecart_type|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+  </div>
+
+  <div class="kpi-card cyan">
+    <div class="kpi-icon cyan"><i class="fas fa-sort-amount-up"></i></div>
+    <div class="kpi-label">Maximum observé</div>
+    <div class="kpi-value">{{ "{:,.0f}".format(stats.max|default(0)).replace(',', ' ') }}<span>F CFA</span></div>
+  </div>
+
+</div>
+
+{% if total > 0 %}
+
+<!-- CHARTS -->
+<div class="charts-grid">
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-university" style="margin-right:6px; color:var(--blue-light)"></i>Répartition par Banque</div>
+    <canvas id="chartBanques" height="220"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title"><i class="fas fa-graduation-cap" style="margin-right:6px; color:var(--accent)"></i>Répartition par Faculté</div>
+    <canvas id="chartFacs" height="220"></canvas>
+  </div>
+
+</div>
+
+<!-- STATS FOOTER PANEL -->
+<div class="panel">
+  <div class="panel-header">
+    <span class="panel-title">Indicateurs Complémentaires</span>
+    <span class="text-muted">Statistiques descriptives</span>
+  </div>
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="stat-cell-label">Minimum</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format(stats.min|default(0)).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Maximum</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format(stats.max|default(0)).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Étendue</div>
+      <div class="stat-cell-value">{{ "{:,.0f}".format((stats.max|default(0)) - (stats.min|default(0))).replace(',', ' ') }} F</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-cell-label">Bancarisés</div>
+      <div class="stat-cell-value">{{ p_inclusion }} %</div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+
+<div class="panel">
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-database"></i></div>
+    <div class="empty-title">Aucune donnée disponible</div>
+    <p class="empty-desc">
+      L'analyse statistique apparaîtra ici dès qu'un premier enregistrement sera ajouté.<br>
+      <a href="{{ url_for('nouveau') }}">Ajouter un étudiant →</a>
+    </p>
+  </div>
+</div>
+
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    const labelsBanques = JSON.parse('{{ l_b|safe if l_b else "[]" }}');
+    const dataBanques   = JSON.parse('{{ c_b|safe if c_b else "[]" }}');
+    const labelsFacs    = JSON.parse('{{ l_f|safe if l_f else "[]" }}');
+    const dataFacs      = JSON.parse('{{ c_f|safe if c_f else "[]" }}');
+
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.font.size   = 12;
+    Chart.defaults.color       = '#64748b';
+
+    if (labelsBanques.length > 0) {
+      new Chart(document.getElementById('chartBanques'), {
+        type: 'bar',
+        data: {
+          labels: labelsBanques,
+          datasets: [{
+            label: 'Étudiants',
+            data: dataBanques,
+            backgroundColor: [
+              '#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'
+            ],
+            borderRadius: 6,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, border: { display: false } },
+            y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { stepSize: 1 } }
+          }
+        }
+      });
+    }
+
+    if (labelsFacs.length > 0) {
+      new Chart(document.getElementById('chartFacs'), {
+        type: 'doughnut',
+        data: {
+          labels: labelsFacs,
+          datasets: [{
+            data: dataFacs,
+            backgroundColor: ['#1d4ed8', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+            borderWidth: 3,
+            borderColor: '#ffffff',
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 16, usePointStyle: true, pointStyleWidth: 8 }
+            }
+          }
+        }
+      });
+    }
+
+  } catch (e) {
+    console.error('Erreur graphiques:', e);
+  }
+});
+</script>
+
+{% endblock %}

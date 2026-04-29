@@ -1,0 +1,101 @@
+{% extends 'index.html' %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1 class="page-title">Nouvel Enregistrement</h1>
+    <p class="page-subtitle">Saisir les données d'épargne d'un étudiant</p>
+  </div>
+</div>
+
+<div class="panel" style="max-width: 820px;">
+  <div class="panel-header">
+    <span class="panel-title"><i class="fas fa-user-graduate" style="color:var(--blue-light); margin-right:8px;"></i>Fiche Étudiant</span>
+  </div>
+  <div class="panel-body">
+
+    <form action="{{ url_for('ajouter') }}" method="POST">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label class="form-label">Nom <span class="req">*</span></label>
+          <input type="text" name="nom" placeholder="ex: Atangana" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Prénom <span class="req">*</span></label>
+          <input type="text" name="prenom" placeholder="ex: Luc" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Matricule <span class="req">*</span></label>
+          <input type="text" name="matricule" placeholder="ex: 22U990" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Niveau d'étude</label>
+          <select name="niveau">
+            <option value="Licence">Licence</option>
+            <option value="Master">Master</option>
+            <option value="Doctorat">Doctorat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Faculté</label>
+          <select name="faculte">
+            <option value="Sciences">Sciences</option>
+            <option value="Polytechnique">Polytechnique</option>
+            <option value="Médecine">Médecine</option>
+            <option value="Droit">Droit</option>
+            <option value="Lettres">Lettres</option>
+            <option value="Économie">Économie</option>
+            <option value="SHS">Sciences Humaines et Sociales</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Établissement bancaire</label>
+          <select name="banque">
+            <option value="Afriland First Bank">Afriland First Bank</option>
+            <option value="Société Générale">Société Générale</option>
+            <option value="BICEC">BICEC</option>
+            <option value="UBA Cameroon">UBA Cameroon</option>
+            <option value="Ecobank">Ecobank</option>
+            <option value="SGBC">SGBC</option>
+            <option value="Sans Banque">Sans Banque</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Montant épargné (F CFA) <span class="req">*</span></label>
+          <input type="number" name="montant" placeholder="ex: 35000" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <!-- spacer intentionnel -->
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">Motivation / Raison d'épargne</label>
+          <textarea name="raison" placeholder="Décrivez la raison principale de cette épargne…"></textarea>
+        </div>
+
+      </div>
+
+      <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <a href="{{ url_for('donnees') }}" class="btn" style="background: var(--surface-2); color: var(--text-muted);">
+          Annuler
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}
